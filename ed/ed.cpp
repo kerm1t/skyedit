@@ -7,15 +7,23 @@
 #include "read_and_parse.h"
 
 high_text our_text;
+HWND hwndScintilla;
 
 #define MAX_LOADSTRING 100
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
+WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
+WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+
+// Forward declarations of functions included in this code module:
+ATOM                MyRegisterClass(HINSTANCE hInstance);
+//BOOL                InitInstance(HINSTANCE, int);
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -27,26 +35,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // TODO: Place code here.
     // https://www.scintilla.org/Steps.html
-    HWND hwndParent = nullptr;
     HMODULE hmod = LoadLibrary(L"SciLexer.DLL");
     if (hmod == NULL)
     {
+      HWND hwndParent = nullptr;
       MessageBox(hwndParent,
         L"The Scintilla DLL could not be loaded.",
         L"Error loading Scintilla",
         MB_OK | MB_ICONERROR);
     }
 
+    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_ED, szWindowClass, MAX_LOADSTRING);
+    MyRegisterClass(hInstance);
+    hInst = hInstance; // !!
+
     // show window
     // 2do: add more controls, i.e. a listbox
-    HWND hwndScintilla = CreateWindowW(L"Scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen", WS_OVERLAPPEDWINDOW,
+    HWND hwndBase = CreateWindowW(szWindowClass, L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen", WS_OVERLAPPEDWINDOW,
+//    HWND hwndScintilla = CreateWindowW(L"Scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-    if (!hwndScintilla)
+    if (!hwndBase)
     {
       return FALSE;
     }
-    ShowWindow(hwndScintilla, nCmdShow);
-    UpdateWindow(hwndScintilla);
+    ShowWindow(hwndBase, nCmdShow);
+    UpdateWindow(hwndBase);
 
 
 
@@ -54,8 +68,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // in: filename
     // out: text, list of positions (i.e. where std-text changes to speech ... and back)  
 //    read_and_parse("hobbit.txt", our_text); // 2 types of citation marks
-//    read_and_parse2("hobbit_mod.txt", our_text); // 1 type of citation marks
-    read_and_parse2("three_men_in_a_boat.txt", our_text); // ???
+    read_and_parse2("hobbit_mod.txt", our_text); // 1 type of citation marks
+//    read_and_parse2("three_men_in_a_boat.txt", our_text); // ???
+//    read_and_parse2("win1.txt", our_text); // 1 type of citation marks
 
 
 
@@ -107,6 +122,31 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
+//
+//  FUNCTION: MyRegisterClass()
+//
+//  PURPOSE: Registers the window class.
+//
+ATOM MyRegisterClass(HINSTANCE hInstance)
+{
+  WNDCLASSEXW wcex;
+
+  wcex.cbSize = sizeof(WNDCLASSEX);
+
+  wcex.style = CS_HREDRAW | CS_VREDRAW;
+  wcex.lpfnWndProc = WndProc;
+  wcex.cbClsExtra = 0;
+  wcex.cbWndExtra = 0;
+  wcex.hInstance = hInstance;
+  wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ED));
+  wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+  wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+  wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_ED);
+  wcex.lpszClassName = szWindowClass;
+  wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+
+  return RegisterClassExW(&wcex);
+}
 
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -122,6 +162,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CREATE:
+      hwndScintilla = CreateWindowW(L"Scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen",
+        WS_CHILD | WS_VSCROLL | WS_HSCROLL | WS_CLIPCHILDREN,
+        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, hWnd, nullptr, hInst, nullptr);
+      ShowWindow(hwndScintilla, SW_SHOW);
+      UpdateWindow(hwndScintilla);
+      break;
+    case WM_SIZE:
+      if (wParam != 1) {
+        RECT rc;
+        ::GetClientRect(hWnd, &rc);
+        ::SetWindowPos(hwndScintilla, 0, 100/*rc.left*/, rc.top, rc.right - rc.left-100, rc.bottom - rc.top, 0);
+      }
+      return 0;
+    
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);

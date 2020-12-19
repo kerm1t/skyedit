@@ -6,6 +6,10 @@ r e a d, the app for reading aloud
 (i) change history:
 
 12/18/2020
+- beautify text (unstructure & restructure)
+- deep voice (Hamit): https://github.com/r9y9/deepvoice3_pytorch
+- Text auf notwendigen Inhalt reduzieren und Schnell-lese moeglichkeit
+- stimmhoehe -> farbe-helligkeit
 - add line numbers
 
 ====
