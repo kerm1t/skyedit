@@ -63,6 +63,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 // (B) regular (slow?) version
     SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(our_text.text.c_str()));
 
+
     // (i) define styles
     // style 0
     SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x0040FF);
@@ -74,8 +75,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xE9C2CE); // light violet (bgr!)
 
 
-    SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
     // (ii) now just concatenate colored/styled sections
+    SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
     // do the coloring
     std::list<speech_at>::iterator it;
     int cnt = 0;

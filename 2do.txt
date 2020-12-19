@@ -1,0 +1,24 @@
+----------------------------------
+r e a d, the app for reading aloud
+(C) 2020 EkwoTECH GmbH
+----------------------------------
+
+change history:
+
+12/18/2020
+- add line numbers
+
+====
+*AI*
+====
+- parse for characters, i.e. now Bilbo is fix, but should be variable.
+  a) said <characterA>
+  b) ...
+- outline these found characters, including their color (max. 255 styles in Scintilla?)
+- scrape the web for an image for each character
+- push the image to a second device, e.g. an iPhone
+====
+
+- add another control in the window : debug
+- add another control in the window : listbox, that can scroll synchronously
+- add another control in the window : paintbox / image
