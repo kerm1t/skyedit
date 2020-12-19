@@ -3,7 +3,10 @@
 
 #include "stdafx.h"
 #include "ed.h"
-#include "Scintilla.h"
+#include "Scintilla.h" // 2do: move into this repo
+#include "read_and_parse.h"
+
+high_text our_text;
 
 #define MAX_LOADSTRING 100
 
@@ -52,6 +55,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ShowWindow(hwndScintilla, nCmdShow);
     UpdateWindow(hwndScintilla);
 
+
+
+    // now load text and parse
+    // in: filename
+    // out: text, list of positions (i.e. where std-text changes to speech ... and back)
+    read_and_parse("hobbit.txt", our_text);
+
+
+
 // example:   SCI_SETTEXT(<unused>, const char *text)
     char texti[72] = "Hallo Tailchen, wie geht es Dir?\nDanke, gut!\nUnd Dir?\nDanke, mir auch.";
 //  (A) fast version:
@@ -66,30 +78,49 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     settext = fn(ptr, SCI_SETTEXT, 0, int(texti));
  */
     // (B) regular (slow?) version
-    SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(texti));
+///    SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(texti));
+    SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(our_text.text.c_str()));
 
 
     // (i) define styles
     SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x0040FF);
-    SendMessage(hwndScintilla, SCI_STYLESETBACK, 0, 0xBBBBBB);
-    SendMessage(hwndScintilla, SCI_STYLESETBOLD, 0, true);
+ //   SendMessage(hwndScintilla, SCI_STYLESETBACK, 0, 0xBBBBBB);
+ //   SendMessage(hwndScintilla, SCI_STYLESETBOLD, 0, true);
 
     SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0xff40FF);
-    SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0x3e3e3e);
+    SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0xDDDDDD);
 
     SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0xFF0000); // bgr
-    SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xDDDDDD);
+ //   SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xDDDDDD);
 
 
-    SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
+    SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1);    // SCI_STARTSTYLING(position start, int unused)
     // (ii) now just concatenate colored/styled sections
-    int length = 5;
+/*    int length = 5;
     SendMessage(hwndScintilla, SCI_SETSTYLING, length, 2); // SCI_SETSTYLING(position length, int style)
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 11, 1); // SCI_SETSTYLING(position length, int style)
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 4, 2); // SCI_SETSTYLING(position length, int style)
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 13, 1); // \n counts as 1 length
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 12, 0); // SCI_SETSTYLING(position length, int style)
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 9, 2); // SCI_SETSTYLING(position length, int style)
+    SendMessage(hwndScintilla, SCI_SETSTYLING, 11, 1);
+    SendMessage(hwndScintilla, SCI_SETSTYLING, 4, 2);
+    SendMessage(hwndScintilla, SCI_SETSTYLING, 13, 1);     // \n counts as 1 length
+    SendMessage(hwndScintilla, SCI_SETSTYLING, 12, 0);
+    SendMessage(hwndScintilla, SCI_SETSTYLING, 9, 2);
+*/
+
+/* doesn't work like this
+    for (int i = 0; i < our_text.list_of_speech.size(); i++)
+    {
+      int len = our_text.list_of_speech(i);
+    }
+*/
+    std::list<speech_at>::iterator it;
+    int cnt = 0;
+    int pos_prev = 0;
+    for (it = our_text.list_of_speech.begin(); it != our_text.list_of_speech.end(); ++it)
+    {
+      int pos = it->pos;
+      int style = cnt++ % 2;
+      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, style);
+      pos_prev = pos;
+    }
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_ED));
 

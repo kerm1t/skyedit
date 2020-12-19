@@ -2,17 +2,6 @@
 *.pcd
 CMakeFiles
 build
-;
-00_Benchmark_and_Research
-01_Supporting_Processes
-02_Requirements
-;03_Design
-04_Engineering/00_CodeGen
-04_Engineering/02_Development_Tools/*
-04_Engineering/04_Build
-!04_Engineering/02_Development_Tools/movpy
-!04_Engineering/02_Development_Tools/scons_tools
-04_Engineering/05_Deliverables
 *.pj
 *.obj
 *.bin
@@ -34,6 +23,7 @@ Sconscript.py
 *.opensdf
 *.opendb
 *.suo
+*.VC.db
 *.unsuccessfulbuild
 *.idb
 Debug

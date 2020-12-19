@@ -27,6 +27,9 @@
     <ClInclude Include="ed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="read_and_parse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
