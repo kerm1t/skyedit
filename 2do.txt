@@ -3,7 +3,7 @@ r e a d, the app for reading aloud
 (C) 2020 EkwoTECH GmbH
 ----------------------------------
 
-change history:
+(i) change history:
 
 12/18/2020
 - add line numbers
@@ -22,3 +22,13 @@ change history:
 - add another control in the window : debug
 - add another control in the window : listbox, that can scroll synchronously
 - add another control in the window : paintbox / image
+
+
+(ii) links:
+https://betanews.com/2016/02/27/cudatext-a-programmers-editor-that-everyone-can-use/
+http://www.uvviewsoft.com/cudatext/
+https://www.scintilla.org/ScintillaDoc.html#Styling
+https://developer.apple.com/documentation/swiftui/text
+https://archive.org/stream/TheHobbitJ.R.R.Tolkien/The%20Hobbit%20-%20J.%20R.%20R.%20Tolkien_djvu.txt
+https://gitter.im/Gargaj/Bonzomatic
+https://github.com/Gargaj/Bonzomatic/blob/master/src/Platform.cpp

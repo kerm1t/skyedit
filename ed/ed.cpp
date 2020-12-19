@@ -1,5 +1,5 @@
 // ed.cpp : Defines the entry point for the application.
-//
+// this should probably renamed to read.cpp or main.cpp
 
 #include "stdafx.h"
 #include "ed.h"
