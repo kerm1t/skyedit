@@ -12,12 +12,8 @@ high_text our_text;
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
-//WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-//WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
 // Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
@@ -41,12 +37,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         MB_OK | MB_ICONERROR);
     }
 
-    // Initialize global strings
-//    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-//    LoadStringW(hInstance, IDC_ED, szWindowClass, MAX_LOADSTRING);
-//    MyRegisterClass(hInstance);
-
-    HWND hwndScintilla = CreateWindowW(L"Scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH Friedrichshafen", WS_OVERLAPPEDWINDOW,
+    // show window
+    // 2do: add more controls, i.e. a listbox
+    HWND hwndScintilla = CreateWindowW(L"Scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
     if (!hwndScintilla)
     {
@@ -64,63 +57,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 
-// example:   SCI_SETTEXT(<unused>, const char *text)
-    char texti[72] = "Hallo Tailchen, wie geht es Dir?\nDanke, gut!\nUnd Dir?\nDanke, mir auch.";
-//  (A) fast version:
-/*    int(*fn)(void*, int, int, int);
-    void * ptr;
-    int settext;
-    int *tmp = reinterpret_cast<int*>(texti);
-
-    fn = (int(__cdecl *)(void *, int, int, int))SendMessage(hwndScintilla, SCI_GETDIRECTFUNCTION, 0, 0);
-    ptr = (void *)SendMessage(hwndScintilla, SCI_GETDIRECTPOINTER, 0, 0);
-
-    settext = fn(ptr, SCI_SETTEXT, 0, int(texti));
- */
-    // (B) regular (slow?) version
-///    SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(texti));
+// (A) fast version [...]
+// (B) regular (slow?) version
     SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(our_text.text.c_str()));
 
-
     // (i) define styles
+    // style 0
     SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x0040FF);
- //   SendMessage(hwndScintilla, SCI_STYLESETBACK, 0, 0xBBBBBB);
- //   SendMessage(hwndScintilla, SCI_STYLESETBOLD, 0, true);
-
-    SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0xff40FF);
-    SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0xDDDDDD);
-
-    SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0xFF0000); // bgr
- //   SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xDDDDDD);
+    // style 1
+    SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x804000); // dark blue (bgr!)
+    SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0x00FF80); // light green (bgr!)
 
 
-    SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1);    // SCI_STARTSTYLING(position start, int unused)
+    SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
     // (ii) now just concatenate colored/styled sections
-/*    int length = 5;
-    SendMessage(hwndScintilla, SCI_SETSTYLING, length, 2); // SCI_SETSTYLING(position length, int style)
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 11, 1);
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 4, 2);
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 13, 1);     // \n counts as 1 length
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 12, 0);
-    SendMessage(hwndScintilla, SCI_SETSTYLING, 9, 2);
-*/
-
-/* doesn't work like this
-    for (int i = 0; i < our_text.list_of_speech.size(); i++)
-    {
-      int len = our_text.list_of_speech(i);
-    }
-*/
+    // do the coloring
     std::list<speech_at>::iterator it;
     int cnt = 0;
     int pos_prev = 0;
     for (it = our_text.list_of_speech.begin(); it != our_text.list_of_speech.end(); ++it)
     {
       int pos = it->pos;
-      int style = cnt++ % 2;
+      int style = it->type;
       SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, style);
       pos_prev = pos;
     }
+
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_ED));
 
@@ -140,33 +102,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 }
 
 
-/*
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-    WNDCLASSEXW wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ED));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_ED);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-*/
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
