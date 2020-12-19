@@ -52,8 +52,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // now load text and parse
     // in: filename
-    // out: text, list of positions (i.e. where std-text changes to speech ... and back)
-    read_and_parse("hobbit.txt", our_text);
+    // out: text, list of positions (i.e. where std-text changes to speech ... and back)  
+//    read_and_parse("hobbit.txt", our_text); // 2 types of citation marks
+//    read_and_parse2("hobbit_mod.txt", our_text); // 1 type of citation marks
+    read_and_parse2("three_men_in_a_boat.txt", our_text); // ???
 
 
 
@@ -67,6 +69,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // style 1
     SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x804000); // dark blue (bgr!)
     SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0x00FF80); // light green (bgr!)
+    // style 2 (Bilbo)
+    SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x804000); // dark blue (bgr!)
+    SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xE9C2CE); // light violet (bgr!)
 
 
     SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
