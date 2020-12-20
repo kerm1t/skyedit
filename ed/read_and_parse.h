@@ -22,6 +22,8 @@ struct high_text {
   std::list<speech_at> list_of_speech; // https://www.geeksforgeeks.org/list-cpp-stl/?ref=lbp
 };
 
+// 2do:
+// Unicode text: https://stackoverflow.com/questions/215963/how-do-you-properly-use-widechartomultibyte
 void read_and_parse(const std::string filename, high_text& out)
 {
 // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring

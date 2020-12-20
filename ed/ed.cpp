@@ -56,10 +56,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MyRegisterClass(hInstance);
     hInst = hInstance; // !!
 
-    // show window
+    // show main (parent) window
     // 2do: add more controls, i.e. a listbox
     HWND hwndBase = CreateWindowW(szWindowClass, L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen", WS_OVERLAPPEDWINDOW,
-//    HWND hwndScintilla = CreateWindowW(L"Scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
     if (!hwndBase)
     {
@@ -140,7 +139,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
-      hwndScintilla = CreateWindowW(L"Scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen",
+      hwndScintilla = CreateWindowW(L"scintilla", L"r-e-a-d (C) 2020 EkwoTECH GmbH, Friedrichshafen",
         WS_CHILD | WS_VSCROLL | WS_HSCROLL | WS_CLIPCHILDREN,
         CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, hWnd, nullptr, hInst, nullptr);
       ShowWindow(hwndScintilla, SW_SHOW);
@@ -169,7 +168,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               ofn.lStructSize = sizeof(ofn);
               ofn.hwndOwner = hWnd;
               ofn.lpstrFile = (WCHAR*)szFile;
-//              ofn.lpstrFile = '\0';
               ofn.nMaxFile = sizeof(szFile);
               ofn.lpstrFilter = L"Text\0 * .TXT\0All\0*.*";
               ofn.nFilterIndex = 1;
@@ -185,6 +183,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 size_t charsConverted = 0;
                 // First arg is the pointer to destination char, second arg is
                 // the pointer to source wchar_t, last arg is the size of char buffer
+// https://stackoverflow.com/questions/18645874/converting-stdwsting-to-char-with-wcstombs-s
                 wcstombs_s(&charsConverted, buffer, ofn.lpstrFile, 500);
                 std::string fname(buffer);
                 read_and_parse2(fname, our_text); // 1 type of citation marks
