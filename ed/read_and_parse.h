@@ -60,6 +60,7 @@ void read_and_parse2(const std::string filename, high_text& out)
   std::stringstream buffer;
   buffer << t.rdbuf();
   out.text = buffer.str();
+  out.list_of_speech.clear();
 
   //  " - just 1 type of citation mark
   std::string stmp = buffer.str();
