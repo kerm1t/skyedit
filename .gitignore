@@ -27,6 +27,7 @@ Sconscript.py
 *.unsuccessfulbuild
 *.idb
 Debug
+Release
 SConscript_sim.py
 .sconsign.dblite
 Debug.xml

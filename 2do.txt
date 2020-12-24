@@ -4,6 +4,9 @@ r e a d, the app for reading aloud
 ----------------------------------
 
 (i) change history:
+12/24/2020
+- currently only compiles & runs with X86 scilexer.dll / scintilla.dll
+- Absaetze und einzelne Satze absetzen
 
 12/18/2020
 - beautify text (unstructure & restructure)
