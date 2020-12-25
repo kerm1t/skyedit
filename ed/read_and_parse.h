@@ -7,6 +7,8 @@
 #include <sstream>
 
 #include <vector>
+#include <algorithm> // erase
+#include <regex>
 
 enum text_type { standard = 0, speech = 1, speech_bilbo=2 };
 
@@ -66,11 +68,20 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<std
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
   std::ifstream t(filename);
   std::stringstream buffer;
+///  buffer.unsetf(std::ios::skipws); // try out!!!
   buffer << t.rdbuf();
   out.text = buffer.str();
 
   //  " - just 1 type of citation mark
   std::string stmp = buffer.str();
+
+// both methods don't work (on std::string)
+  stmp.erase(std::remove(stmp.begin(), stmp.end(), '\n'), stmp.end());
+///  std::regex newlines_re("\n+");
+///  auto result = std::regex_replace(stmp, newlines_re, "");
+///  stmp = result;
+//  for (int i=0;i<buffer.)
+
   int ifound=0;
   int style=(int)standard;
   for (int i = 0; i < (int)stmp.length(); i++)

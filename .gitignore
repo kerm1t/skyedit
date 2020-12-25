@@ -1,3 +1,5 @@
+!Scintilla.dll
+!SciLexer.dll
 *.zip
 *.pcd
 CMakeFiles
