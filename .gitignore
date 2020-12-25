@@ -1,5 +1,3 @@
-!Scintilla.dll
-!SciLexer.dll
 *.zip
 *.pcd
 CMakeFiles
@@ -8,7 +6,9 @@ build
 *.obj
 *.bin
 *.exe
-*.dll
+#*.dll
+#!scintilla.dll
+#!scilexer.dll
 *.pdb
 *.dmp
 *.log
