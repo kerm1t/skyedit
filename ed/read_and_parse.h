@@ -6,6 +6,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <vector>
+
 enum text_type { standard = 0, speech = 1, speech_bilbo=2 };
 
 struct speech_at {
@@ -55,7 +57,7 @@ void read_and_parse(const std::string filename, high_text& out)
   }
 }
 
-void read_and_parse2(const std::string filename, high_text& out)
+void read_and_parse2(const std::string filename, high_text& out, std::vector<std::string>& speaker)
 {
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
   std::ifstream t(filename);
@@ -79,19 +81,33 @@ void read_and_parse2(const std::string filename, high_text& out)
         (stmp[i + 2] == 's') &&
         (stmp[i + 3] == 'a') &&
         (stmp[i + 4] == 'i') &&
-        (stmp[i + 5] == 'd')) style = (int)speech;
+        (stmp[i + 5] == 'd'))
+      {
+        style = (int)speech;
 
-      if ((stmp[i + 1] == ' ') &&
-        (stmp[i + 2] == 's') &&
-        (stmp[i + 3] == 'a') &&
-        (stmp[i + 4] == 'i') &&
-        (stmp[i + 5] == 'd') &&
-        (stmp[i + 6] == ' ') && 
-        (stmp[i + 7] == 'B') && 
-        (stmp[i + 8] == 'i') && 
-        (stmp[i + 9] == 'l') && 
-        (stmp[i + 10] == 'b') && 
-        (stmp[i + 11] == 'o')) style = (int)speech_bilbo;
+        // Bilbo hack!
+        if (
+          (stmp[i + 7] == 'B') &&
+          (stmp[i + 8] == 'i') &&
+          (stmp[i + 9] == 'l') &&
+          (stmp[i + 10] == 'b') &&
+          (stmp[i + 11] == 'o')) style = (int)speech_bilbo;
+
+        // find name after "said ..."   stmp[i + 6] == ' '
+        int n = 7;
+        std::string name;
+        while ((stmp[i + n] != ' ') && (stmp[i + n] != '.') && (stmp[i + n] != ',') && (stmp[i + n] != ';'))
+        {
+          name = name + stmp[i+n];
+          n++;
+        }
+        std::cout << name << std::endl;
+//        speaker.push_back(name);
+        if (!(std::find(speaker.begin(), speaker.end(), name) != speaker.end()))
+        {
+          speaker.push_back(name);
+        }
+      }
 
       if ((style==1) || (style==2))
         out.list_of_speech.push_back( {i+1, (text_type)style} );

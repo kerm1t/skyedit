@@ -32,6 +32,9 @@ r e a d, the app for reading aloud
 
 
 (ii) links:
+https://github.com/sawickiap/WinFontRender
+http://winapi.foosyerdoos.org.uk/index.php
+https://stackoverflow.com/questions/44877895/how-to-create-some-basic-controls-like-listbox-on-winapi-c
 https://betanews.com/2016/02/27/cudatext-a-programmers-editor-that-everyone-can-use/
 http://www.uvviewsoft.com/cudatext/
 https://www.scintilla.org/ScintillaDoc.html#Styling

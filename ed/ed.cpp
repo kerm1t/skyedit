@@ -8,12 +8,46 @@
 #include <Commdlg.h>
 
 high_text our_text;
+std::vector<std::string> speaker;
+
+HWND hList;
 
 HWND hwndScintilla;
 OPENFILENAME ofn;
 char szFile[260];
 BOOL b_filechosen;
 void color_scintilla();
+
+
+//define an unicode string type alias
+typedef std::basic_string<TCHAR> ustring;
+//=============================================================================
+//message processing function declarations
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+int OnCreate(const HWND, CREATESTRUCT*);
+
+//non-message function declarations
+inline UINT AddString(const HWND, const std::wstring&);
+HWND CreateListbox(const HWND, const HINSTANCE, DWORD, const RECT&, const int, const ustring&);
+HWND CreateStatics(const HWND, const HINSTANCE, DWORD, const RECT&, const int, const ustring&); 
+inline int ErrMsg(const ustring&);
+
+//setup some edit control id's
+enum {
+  IDCL_LISTBOX = 200,
+  IDC_TEXT
+};
+//=============================================================================
+
+
+int StringToWString(std::wstring &ws, const std::string &s)
+{
+  std::wstring wsTmp(s.begin(), s.end());
+  ws = wsTmp;
+  return 0;
+}
+
+
 
 #define MAX_LOADSTRING 100
 
@@ -144,6 +178,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, hWnd, nullptr, hInst, nullptr);
       ShowWindow(hwndScintilla, SW_SHOW);
       UpdateWindow(hwndScintilla);
+      
+      OnCreate(hWnd, reinterpret_cast<CREATESTRUCT*>(lParam));
+      
       break;
     case WM_SIZE:
       if (wParam != 1) {
@@ -186,7 +223,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 // https://stackoverflow.com/questions/18645874/converting-stdwsting-to-char-with-wcstombs-s
                 wcstombs_s(&charsConverted, buffer, ofn.lpstrFile, 500);
                 std::string fname(buffer);
-                read_and_parse2(fname, our_text); // 1 type of citation marks
+                read_and_parse2(fname, our_text, speaker); // 1 type of citation marks
                 color_scintilla();
               }
               break;
@@ -241,6 +278,16 @@ void color_scintilla()
   // (A) fast version [...]
 // (B) regular (slow?) version
   SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(our_text.text.c_str()));
+//  std::string tmp_speakers(*speaker.data());
+//  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(tmp_speakers.c_str()));
+
+  for (int i = 0; i < speaker.size(); i++)
+  {
+    std::string s = speaker[i];
+    std::wstring ws;
+    StringToWString(ws, s);
+    AddString(hList, ws);
+  }
 
   // (i) define styles
   // style 0
@@ -267,3 +314,76 @@ void color_scintilla()
     pos_prev = pos;
   }
 }
+
+// http://winapi.foosyerdoos.org.uk/code/usercntrls/htm/createlistbox.php
+//=============================================================================
+inline int ErrMsg(const ustring& s)
+{
+  return MessageBox(0, s.c_str(), _T("ERROR"), MB_OK | MB_ICONEXCLAMATION);
+}
+//=============================================================================
+int OnCreate(const HWND hwnd, CREATESTRUCT *cs)
+{
+  //handles the WM_CREATE message of the main, parent window; return -1 to fail
+  //window creation
+  RECT rect;
+  int height;
+  if (GetClientRect(hwnd, &rect)) { height = rect.bottom - rect.top; }
+  RECT rc;
+  rc = { 0,0,100,20 };
+  CreateStatics(hwnd, cs->hInstance, SS_SIMPLE, rc, IDC_TEXT, _T("Speakers"));
+  rc = { 0,20,100, height };
+  hList = CreateListbox(hwnd, cs->hInstance, 0, rc, IDCL_LISTBOX, _T(""));
+  
+//  CFont Font;
+//  Font.CreatePointFont(120, _T("Courier"));        // creates a 12-point-Courier-font
+//  m_Listbox.SetFont(&Font);                        // with a member variable associated
+
+//  AddString(hList, _T("Listbox"));
+
+  return 0;
+}
+//=============================================================================
+HWND CreateListbox(const HWND hParent, const HINSTANCE hInst, DWORD dwStyle,
+  const RECT& rc, const int id, const ustring& caption)
+{
+  dwStyle |= WS_CHILD | WS_VISIBLE | WS_VSCROLL;
+  return CreateWindowEx(WS_EX_CLIENTEDGE,             //extended styles
+    _T("listbox"),                //control 'class' name
+    caption.c_str(),              //control caption
+    dwStyle,                      //control style 
+    rc.left,                      //position: left
+    rc.top,                       //position: top
+    rc.right,                     //width
+    rc.bottom,                    //height
+    hParent,                      //parent window handle
+    //control's ID
+    reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)),
+    hInst,                        //application instance
+    0);                           //user defined info
+}
+//=============================================================================
+HWND CreateStatics(const HWND hParent, const HINSTANCE hInst, DWORD dwStyle,
+  const RECT& rc, const int id, const ustring& caption)
+{
+  dwStyle |= WS_CHILD | WS_VISIBLE;
+  return CreateWindowEx(0,                            //extended styles
+    _T("static"),                 //control 'class' name
+    caption.c_str(),              //control caption
+    dwStyle,                      //control style 
+    rc.left,                      //position: left
+    rc.top,                       //position: top
+    rc.right,                     //width
+    rc.bottom,                    //height
+    hParent,                      //parent window handle
+    //control's ID
+    reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)),
+    hInst,                        //application instance
+    0);                           //user defined info
+}
+//=============================================================================
+inline UINT AddString(const HWND hList, const std::wstring& s)
+{
+  return static_cast<UINT>(SendMessage(hList, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(s.c_str())));
+}
+//=============================================================================
