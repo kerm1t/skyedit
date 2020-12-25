@@ -11,12 +11,13 @@ high_text our_text;
 std::vector<std::string> speaker;
 
 HWND hList;
+void list_speakers();
 
 HWND hwndScintilla;
 OPENFILENAME ofn;
 char szFile[260];
 BOOL b_filechosen;
-void color_scintilla();
+void fill_and_color_scintilla();
 
 
 //define an unicode string type alias
@@ -39,7 +40,7 @@ enum {
 };
 //=============================================================================
 
-
+// helpers ...
 int StringToWString(std::wstring &ws, const std::string &s)
 {
   std::wstring wsTmp(s.begin(), s.end());
@@ -224,7 +225,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 wcstombs_s(&charsConverted, buffer, ofn.lpstrFile, 500);
                 std::string fname(buffer);
                 read_and_parse2(fname, our_text, speaker); // 1 type of citation marks
-                color_scintilla();
+                list_speakers();
+                fill_and_color_scintilla();
               }
               break;
             case IDM_EXIT:
@@ -272,22 +274,25 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
-
-void color_scintilla()
+void list_speakers()
 {
-  // (A) fast version [...]
-// (B) regular (slow?) version
-  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(our_text.text.c_str()));
-//  std::string tmp_speakers(*speaker.data());
-//  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(tmp_speakers.c_str()));
-
-  for (int i = 0; i < speaker.size(); i++)
+  SendMessage(hList, LB_RESETCONTENT, 0, 0); // clear
+  for (int i = 0; i < (int)speaker.size(); i++) // 2do: use iterator to traverse through std::vector
   {
     std::string s = speaker[i];
     std::wstring ws;
     StringToWString(ws, s);
     AddString(hList, ws);
   }
+}
+
+void fill_and_color_scintilla()
+{
+  // (A) fast version [...]
+// (B) regular (slow?) version
+  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(our_text.text.c_str()));
+//  std::string tmp_speakers(*speaker.data());
+//  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(tmp_speakers.c_str()));
 
   // (i) define styles
   // style 0
