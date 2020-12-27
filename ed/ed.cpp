@@ -320,12 +320,23 @@ void fill_and_color_scintilla()
   // 2do: dark background -> white font ( wenn 2 von 3 kleiner 0x1d)
   for (int i = 4; i < 30; i++)
   {
-    SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0x804000); // dark blue (bgr!)
+    // background color
     int tmp1 = std::rand() % 255;
     int tmp2 = std::rand() % 255;
     int tmp3 = std::rand() % 255;
     int bgcol = (tmp1 << 16) | (tmp2 << 8) | tmp3;
     SendMessage(hwndScintilla, SCI_STYLESETBACK, i, bgcol); // light green (bgr!)
+    // foreground color
+    int contrast = 0;
+//#define LOW_CONTRAST1 30
+#define LOW_CONTRAST 60 // 50 // 30
+    if (tmp1 < LOW_CONTRAST) contrast++;
+    if (tmp2 < LOW_CONTRAST) contrast++;
+    if (tmp3 < LOW_CONTRAST) contrast++;
+    if (contrast >= 1) // >= 2 have criteria for 1 of 3 ... or ... 2 of 3
+      SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0xFFFFFF); // white
+    else
+      SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0x804000); // dark blue (bgr!)
   }
 
   // (ii) now just concatenate colored/styled sections
