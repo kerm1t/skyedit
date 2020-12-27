@@ -26,7 +26,8 @@ struct speaker
 struct speech_at {
   int pos;
   text_type type;
-  std::string name; // speaker
+//  std::string name; // speaker
+  int idx_speaker;
 };
 // entities, which are extracted from the text, i.e. speakers, speech blocks ---------------------------------
 
@@ -144,6 +145,7 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<spe
             (stmp[i + 7] == 'e') &&
             (stmp[i + 8] == 'd')) start = 10;
 
+      int idx_speaker = -1;
       // said, 2do: added, answered, asked, continued, cried, exclaimed, inquired, interposed, interrupted,
       //            murmured, remarked, replied, responded, returned, sighed,  
       //            thought!!, whispered, ...
@@ -182,6 +184,7 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<spe
 
         // add speaker to list (if new) or increase occurence
         bool found = false;
+        int cnt=0;
         for (std::vector<speaker>::iterator it = std::begin(speakers); it != std::end(speakers); ++it)
         {
           if ((*it).name == name)
@@ -190,16 +193,27 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<spe
             (*it).occurence++;
             break;
           }
+          cnt++;
         }
-        if (!found) speakers.push_back({ name, 1 });
+        if (!found)
+        {
+          speakers.push_back({ name, 1 });
+          idx_speaker = speakers.size(); // a) new speaker
+        }
+        else
+        {
+          idx_speaker = cnt; // b) speaker found above
+        }
         // 2do: return an index here, which can be used below ...
         style = 2;
       }
 
+#define MIN_STYLE_SPEAKER 2
+
       if ((style==1) || (style==2)) // 2do: > 0
-        out.list_of_speech.push_back( {i+1, (text_type)style, name});
+        out.list_of_speech.push_back( {i+1, (text_type)style, MIN_STYLE_SPEAKER+idx_speaker});
       else
-        out.list_of_speech.push_back( {i, (text_type)style} );
+        out.list_of_speech.push_back( {i, (text_type)style, -1} );
 
 /// 2do: 2 (e.g. Bilbo) or greater
       if (style == 2) style = 1; // hack! set back, so that style=1-style works as above

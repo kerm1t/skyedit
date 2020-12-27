@@ -316,6 +316,17 @@ void fill_and_color_scintilla()
   // style 3
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 3, 0x804000); // dark blue (bgr!)
   SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0x00FF80); // light green (bgr!)
+  std::srand(std::time(nullptr)); // seed
+  // 2do: dark background -> white font ( wenn 2 von 3 kleiner 0x1d)
+  for (int i = 4; i < 30; i++)
+  {
+    SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0x804000); // dark blue (bgr!)
+    int tmp1 = std::rand() % 255;
+    int tmp2 = std::rand() % 255;
+    int tmp3 = std::rand() % 255;
+    int bgcol = (tmp1 << 16) | (tmp2 << 8) | tmp3;
+    SendMessage(hwndScintilla, SCI_STYLESETBACK, i, bgcol); // light green (bgr!)
+  }
 
   // (ii) now just concatenate colored/styled sections
   SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
@@ -327,11 +338,13 @@ void fill_and_color_scintilla()
   {
     int pos = it->pos;
     int style = it->type;
+    int idx_speaker = it->idx_speaker;
 //    if (cnt==0)
 //      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, 0);
 //    else
-      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, style);
-    pos_prev = pos;
+///      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, style);
+      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, idx_speaker);
+      pos_prev = pos;
 //    cnt++;
   }
 }
