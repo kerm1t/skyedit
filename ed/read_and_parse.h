@@ -26,6 +26,7 @@ struct speaker
 struct speech_at {
   int pos;
   text_type type;
+  std::string name; // speaker
 };
 // entities, which are extracted from the text, i.e. speakers, speech blocks ---------------------------------
 
@@ -96,57 +97,89 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<spe
 //  for (int i=0;i<buffer.)
 
   int ifound=0;
-  int style = 1;// so 1-style will be 0 as a start!! ... (int)standard;
+  int style = 1; // so 1-style will be 0 as a start!! ... (int)standard;
   for (int i = 0; i < (int)stmp.length(); i++)
   {
     if (stmp[i] == '"')
     {
-//      int style = (ifound++ % 2); // alternate, this might cause error, when text is not clean
       style = 1 - style;
-      // correction:
+      std::string name;
+      int start = 0;
       if ((stmp[i + 1] == ' ') &&
         (stmp[i + 2] == 's') &&
         (stmp[i + 3] == 'a') &&
         (stmp[i + 4] == 'i') &&
-        (stmp[i + 5] == 'd'))
+        (stmp[i + 5] == 'd')) start = 7;
+      else
+      if ((stmp[i + 1] == ' ') &&
+        (stmp[i + 2] == 'c') &&
+        (stmp[i + 3] == 'r') &&
+        (stmp[i + 4] == 'i') &&
+        (stmp[i + 5] == 'e') &&
+        (stmp[i + 6] == 'd')) start = 8;
+      else
+      if ((stmp[i + 1] == ' ') &&
+        (stmp[i + 2] == 'a') &&
+        (stmp[i + 3] == 's') &&
+        (stmp[i + 4] == 'k') &&
+        (stmp[i + 5] == 'e') &&
+        (stmp[i + 6] == 'd')) start = 8;
+      else
+        if ((stmp[i + 1] == ' ') &&
+          (stmp[i + 2] == 'i') &&
+          (stmp[i + 3] == 'n') &&
+          (stmp[i + 4] == 'q') &&
+          (stmp[i + 5] == 'u') &&
+          (stmp[i + 6] == 'i') &&
+          (stmp[i + 7] == 'r') &&
+          (stmp[i + 8] == 'e') &&
+          (stmp[i + 9] == 'd')) start = 11;
+        else
+          if ((stmp[i + 1] == ' ') &&
+            (stmp[i + 2] == 'r') &&
+            (stmp[i + 3] == 'e') &&
+            (stmp[i + 4] == 'p') &&
+            (stmp[i + 5] == 'l') &&
+            (stmp[i + 6] == 'i') &&
+            (stmp[i + 7] == 'e') &&
+            (stmp[i + 8] == 'd')) start = 10;
+
+      // said, 2do: added, answered, asked, continued, cried, exclaimed, inquired, interposed, interrupted,
+      //            murmured, remarked, replied, responded, returned, sighed,  
+      //            thought!!, whispered, ...
+      if (start > 0)
       {
         style = (int)speech;
 
-        // Bilbo hack!
-        if (
-          (stmp[i + 7] == 'B') &&
-          (stmp[i + 8] == 'i') &&
-          (stmp[i + 9] == 'l') &&
-          (stmp[i + 10] == 'b') &&
-          (stmp[i + 11] == 'o')) style = (int)speech_bilbo;
-
         // find name after "said ..."   stmp[i + 6] == ' '
-        int n = 7;
-        std::string name;
-        // M. de Villefort
-        while ((stmp[i + n] != ' ') && (stmp[i + n] != '.') && (stmp[i + n] != ',') && (stmp[i + n] != ';'))
+        int n = 0;
+        // 2do: M. de Villefort
+        while ((stmp[i + start + n] != ' ') &&
+          (stmp[i + start + n] != '.') &&
+          (stmp[i + start + n] != ',') &&
+          (stmp[i + start + n] != ';') &&
+          (stmp[i + start + n] != ':'))
         {
-          name = name + stmp[i+n];
+          name = name + stmp[i+start+n];
           n++;
         }
         if ((name.compare("the") == 0) || (name.compare("a") == 0))
         {
           n++; // jump over the space
           name = name + " "; // add the space ;-)
-          while ((stmp[i + n] != ' ') && (stmp[i + n] != '.') && (stmp[i + n] != ',') && (stmp[i + n] != ';'))
+          while ((stmp[i + start + n] != ' ') &&
+            (stmp[i + start + n] != '.') &&
+            (stmp[i + start + n] != ',') &&
+            (stmp[i + start + n] != ';') &&
+            (stmp[i + start + n] != ':'))
           {
-            name = name + stmp[i + n];
+            name = name + stmp[i + start + n];
             n++;
           }
         }
 
         std::cout << name << std::endl;
-//        speaker.push_back(name);
-/*        if (!(std::find(speakers.begin(), speakers.end(), name) != speakers.end()))
-        {
-          speakers.push_back({ name, 0 });
-        }
-*/
+
         // add speaker to list (if new) or increase occurence
         bool found = false;
         for (std::vector<speaker>::iterator it = std::begin(speakers); it != std::end(speakers); ++it)
@@ -157,18 +190,18 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<spe
             (*it).occurence++;
             break;
           }
-//        for (int i=0; i < speakers.size(); i++)
-//        {
-//          if (speakers[i].name == name) found = true;
         }
         if (!found) speakers.push_back({ name, 1 });
+        // 2do: return an index here, which can be used below ...
+        style = 2;
       }
 
-      if ((style==1) || (style==2))
-        out.list_of_speech.push_back( {i+1, (text_type)style} );
+      if ((style==1) || (style==2)) // 2do: > 0
+        out.list_of_speech.push_back( {i+1, (text_type)style, name});
       else
         out.list_of_speech.push_back( {i, (text_type)style} );
 
+/// 2do: 2 (e.g. Bilbo) or greater
       if (style == 2) style = 1; // hack! set back, so that style=1-style works as above
     }
   }

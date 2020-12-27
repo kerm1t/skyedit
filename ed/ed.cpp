@@ -295,16 +295,27 @@ void fill_and_color_scintilla()
 //  std::string tmp_speakers(*speaker.data());
 //  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(tmp_speakers.c_str()));
 
+// https://scintilla-interest.narkive.com/j9CxOCCw/changing-the-font-doesn-t-update-scintilla
+  SendMessage(hwndScintilla, SCI_STYLESETFONT, STYLE_DEFAULT, (LPARAM)"Calibri"); // font
+  SendMessage(hwndScintilla, SCI_STYLESETSIZE, STYLE_DEFAULT, 20); // font size
+  SendMessage(hwndScintilla, SCI_STYLECLEARALL, 0, 0);
+
   // (i) define styles
   // style 0
-  SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x0040FF);
-  // style 1
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x000000);
+  // style 1 (citation found, speaker undefined)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x804000); // dark blue (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0x00FF80); // light green (bgr!)
-  // style 2 (Bilbo)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0xCCCCCC); // light gray (bgr!)
+//  tut's net mit diesem style, nur fuer STYLE_DEFAULT ... (s.o.)
+//  SendMessage(hwndScintilla, SCI_STYLESETFONT, 1, (LPARAM)"Arial"); // font
+//  SendMessage(hwndScintilla, SCI_STYLESETSIZE, 1, 20); // font size
+//  SendMessage(hwndScintilla, SCI_STYLECLEARALL,1, 0);
+// style 2 (keyword "said", "answered", ... recognized)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x804000); // dark blue (bgr!)
   SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xE9C2CE); // light violet (bgr!)
-
+  // style 3
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 3, 0x804000); // dark blue (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0x00FF80); // light green (bgr!)
 
   // (ii) now just concatenate colored/styled sections
   SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
