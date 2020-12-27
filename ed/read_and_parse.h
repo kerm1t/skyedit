@@ -10,12 +10,25 @@
 #include <algorithm> // erase
 #include <regex>
 
+// entities, which are extracted from the text, i.e. speakers, speech blocks ---------------------------------
 enum text_type { standard = 0, speech = 1, speech_bilbo=2 };
+
+struct speaker
+{
+  std::string name;
+  int occurence;
+  inline bool operator < (const speaker& struct2) // https://stackoverflow.com/questions/1380463/sorting-a-vector-of-custom-objects
+  {
+    return (name < struct2.name);
+  }
+};
 
 struct speech_at {
   int pos;
   text_type type;
 };
+// entities, which are extracted from the text, i.e. speakers, speech blocks ---------------------------------
+
 
 struct high_text {
   std::string text;
@@ -59,10 +72,10 @@ void read_and_parse(const std::string filename, high_text& out)
   }
 }
 
-void read_and_parse2(const std::string filename, high_text& out, std::vector<std::string>& speaker)
+void read_and_parse2(const std::string filename, high_text& out, std::vector<speaker>& speakers)
 {
   // init
-  speaker.clear();
+  speakers.clear();
   out.list_of_speech.clear();
 
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
@@ -129,10 +142,26 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<std
 
         std::cout << name << std::endl;
 //        speaker.push_back(name);
-        if (!(std::find(speaker.begin(), speaker.end(), name) != speaker.end()))
+/*        if (!(std::find(speakers.begin(), speakers.end(), name) != speakers.end()))
         {
-          speaker.push_back(name);
+          speakers.push_back({ name, 0 });
         }
+*/
+        // add speaker to list (if new) or increase occurence
+        bool found = false;
+        for (std::vector<speaker>::iterator it = std::begin(speakers); it != std::end(speakers); ++it)
+        {
+          if ((*it).name == name)
+          {
+            found = true;
+            (*it).occurence++;
+            break;
+          }
+//        for (int i=0; i < speakers.size(); i++)
+//        {
+//          if (speakers[i].name == name) found = true;
+        }
+        if (!found) speakers.push_back({ name, 1 });
       }
 
       if ((style==1) || (style==2))

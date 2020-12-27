@@ -8,7 +8,7 @@
 #include <Commdlg.h>
 
 high_text our_text;
-std::vector<std::string> speaker;
+std::vector<speaker> speakers;
 
 HWND hList;
 void list_speakers();
@@ -187,7 +187,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       if (wParam != 1) {
         RECT rc;
         ::GetClientRect(hWnd, &rc);
-        ::SetWindowPos(hwndScintilla, 0, 100/*rc.left*/, rc.top, rc.right - rc.left-100, rc.bottom - rc.top, 0);
+        ::SetWindowPos(hwndScintilla, 0, 150/*rc.left*/, rc.top, rc.right - rc.left-150, rc.bottom - rc.top, 0);
       }
       return 0;
     
@@ -224,7 +224,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 // https://stackoverflow.com/questions/18645874/converting-stdwsting-to-char-with-wcstombs-s
                 wcstombs_s(&charsConverted, buffer, ofn.lpstrFile, 500);
                 std::string fname(buffer);
-                read_and_parse2(fname, our_text, speaker); // 1 type of citation marks
+                read_and_parse2(fname, our_text, speakers); // 1 type of citation marks
                 list_speakers();
                 fill_and_color_scintilla();
               }
@@ -276,10 +276,11 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void list_speakers()
 {
+  sort(speakers.begin(), speakers.end());
   SendMessage(hList, LB_RESETCONTENT, 0, 0); // clear
-  for (int i = 0; i < (int)speaker.size(); i++) // 2do: use iterator to traverse through std::vector
+  for (int i = 0; i < (int)speakers.size(); i++) // 2do: use iterator to traverse through std::vector
   {
-    std::string s = speaker[i];
+    std::string s = speakers[i].name + " (" + std::to_string(speakers[i].occurence) + ")";
     std::wstring ws;
     StringToWString(ws, s);
     AddString(hList, ws);
@@ -339,9 +340,9 @@ int OnCreate(const HWND hwnd, CREATESTRUCT *cs)
   int height;
   if (GetClientRect(hwnd, &rect)) { height = rect.bottom - rect.top; }
   RECT rc;
-  rc = { 0,0,100,20 };
+  rc = { 0,0,150,20 };
   CreateStatics(hwnd, cs->hInstance, SS_SIMPLE, rc, IDC_TEXT, _T("Speakers"));
-  rc = { 0,20,100, height };
+  rc = { 0,20,150, height };
   hList = CreateListbox(hwnd, cs->hInstance, 0, rc, IDCL_LISTBOX, _T(""));
   
 //  CFont Font;
