@@ -76,14 +76,14 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<std
   std::string stmp = buffer.str();
 
 // both methods don't work (on std::string)
-  stmp.erase(std::remove(stmp.begin(), stmp.end(), '\n'), stmp.end());
+//////// -> coloring not functioning anymore ...  stmp.erase(std::remove(stmp.begin(), stmp.end(), '\n'), stmp.end());
 ///  std::regex newlines_re("\n+");
 ///  auto result = std::regex_replace(stmp, newlines_re, "");
 ///  stmp = result;
 //  for (int i=0;i<buffer.)
 
   int ifound=0;
-  int style=(int)standard;
+  int style = 1;// so 1-style will be 0 as a start!! ... (int)standard;
   for (int i = 0; i < (int)stmp.length(); i++)
   {
     if (stmp[i] == '"')
@@ -110,11 +110,23 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<std
         // find name after "said ..."   stmp[i + 6] == ' '
         int n = 7;
         std::string name;
+        // M. de Villefort
         while ((stmp[i + n] != ' ') && (stmp[i + n] != '.') && (stmp[i + n] != ',') && (stmp[i + n] != ';'))
         {
           name = name + stmp[i+n];
           n++;
         }
+        if ((name.compare("the") == 0) || (name.compare("a") == 0))
+        {
+          n++; // jump over the space
+          name = name + " "; // add the space ;-)
+          while ((stmp[i + n] != ' ') && (stmp[i + n] != '.') && (stmp[i + n] != ',') && (stmp[i + n] != ';'))
+          {
+            name = name + stmp[i + n];
+            n++;
+          }
+        }
+
         std::cout << name << std::endl;
 //        speaker.push_back(name);
         if (!(std::find(speaker.begin(), speaker.end(), name) != speaker.end()))

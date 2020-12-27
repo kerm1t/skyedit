@@ -20,6 +20,7 @@ Sconscript.py
 *.tlog
 *.sbr
 *.cache
+.vs
 *.ipch
 *.sdf
 *.opensdf

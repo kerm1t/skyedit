@@ -112,7 +112,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 //    read_and_parse2("three_men_in_a_boat.txt", our_text); // ???
 //    read_and_parse2("win1.txt", our_text); // 1 type of citation marks
 
-    
+
 //    color_scintilla();
 
 
@@ -290,7 +290,7 @@ void fill_and_color_scintilla()
 {
   // (A) fast version [...]
 // (B) regular (slow?) version
-  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(our_text.text.c_str()));
+  SendMessage(hwndScintilla, SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(our_text.text.c_str()));
 //  std::string tmp_speakers(*speaker.data());
 //  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(tmp_speakers.c_str()));
 
@@ -309,14 +309,18 @@ void fill_and_color_scintilla()
   SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
   // do the coloring
   std::list<speech_at>::iterator it;
-  int cnt = 0;
+  //  int cnt = 0;
   int pos_prev = 0;
   for (it = our_text.list_of_speech.begin(); it != our_text.list_of_speech.end(); ++it)
   {
     int pos = it->pos;
     int style = it->type;
-    SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, style);
+//    if (cnt==0)
+//      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, 0);
+//    else
+      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, style);
     pos_prev = pos;
+//    cnt++;
   }
 }
 
