@@ -197,8 +197,8 @@ void read_and_parse2(const std::string filename, high_text& out, std::vector<spe
         }
         if (!found)
         {
-          speakers.push_back({ name, 1 });
           idx_speaker = speakers.size(); // a) new speaker
+          speakers.push_back({ name, 1 });
         }
         else
         {
