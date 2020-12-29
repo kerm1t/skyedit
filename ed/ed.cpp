@@ -7,7 +7,7 @@
 #include "read_and_parse.h"
 #include <Commdlg.h>
 
-high_text our_text;
+highlighted_corpus our_text;
 std::vector<speaker> speakers;
 
 HWND hList;
@@ -300,40 +300,53 @@ void fill_and_color_scintilla()
   SendMessage(hwndScintilla, SCI_STYLESETSIZE, STYLE_DEFAULT, 20); // font size
   SendMessage(hwndScintilla, SCI_STYLECLEARALL, 0, 0);
 
+  SendMessage(hwndScintilla, SCI_SETWRAPMODE, 1, 1);
+
   // (i) define styles
   // style 0
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x000000);
-  // style 1 (citation found, speaker undefined)
-  SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x804000); // dark blue (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0xCCCCCC); // light gray (bgr!)
+  // style 1 speaker!
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x0000FF); // red (bgr!)
+//  SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0xCCCCCC); // white
+  SendMessage(hwndScintilla, SCI_STYLESETUNDERLINE, 1, 1);
+  SendMessage(hwndScintilla, SCI_STYLESETBOLD, 1, 1);
+// style 2 (citation found, speaker undefined)
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x804000); // dark blue (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xCCCCCC); // light gray (bgr!)
 //  tut's net mit diesem style, nur fuer STYLE_DEFAULT ... (s.o.)
 //  SendMessage(hwndScintilla, SCI_STYLESETFONT, 1, (LPARAM)"Arial"); // font
 //  SendMessage(hwndScintilla, SCI_STYLESETSIZE, 1, 20); // font size
 //  SendMessage(hwndScintilla, SCI_STYLECLEARALL,1, 0);
-// style 2 (keyword "said", "answered", ... recognized)
-  SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x804000); // dark blue (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xE9C2CE); // light violet (bgr!)
-  // style 3
+  // style 3 (keyword "said", "answered", ... recognized)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 3, 0x804000); // dark blue (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0x00FF80); // light green (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0xE9C2CE); // light violet (bgr!)
+  // style 4
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 4, 0x804000); // dark blue (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 4, 0x00FF80); // light green (bgr!)
   std::srand(std::time(nullptr)); // seed
   // 2do: dark background -> white font ( wenn 2 von 3 kleiner 0x1d)
-  for (int i = 4; i < 30; i++)
+  for (int i = 5; i < 30; i++)
   {
-    // background color
-    int tmp1 = std::rand() % 255;
-    int tmp2 = std::rand() % 255;
-    int tmp3 = std::rand() % 255;
+    // (a) background color
+#define COLOR_MIN 35
+    int tmp1 = COLOR_MIN + (std::rand() % (252 - COLOR_MIN)); // limit to 252, otherwise we might get white background
+    int tmp2 = COLOR_MIN + (std::rand() % (252 - COLOR_MIN));
+    int tmp3 = COLOR_MIN + (std::rand() % (252 - COLOR_MIN));
     int bgcol = (tmp1 << 16) | (tmp2 << 8) | tmp3;
     SendMessage(hwndScintilla, SCI_STYLESETBACK, i, bgcol); // light green (bgr!)
-    // foreground color
-    int contrast = 0;
-//#define LOW_CONTRAST1 30
-#define LOW_CONTRAST 60 // 50 // 30
-    if (tmp1 < LOW_CONTRAST) contrast++;
-    if (tmp2 < LOW_CONTRAST) contrast++;
-    if (tmp3 < LOW_CONTRAST) contrast++;
-    if (contrast >= 1) // >= 2 have criteria for 1 of 3 ... or ... 2 of 3
+    // (b) foreground color, this is quite a crude heuristic, 2do: eventually replace by some better color model
+    int contrast1 = 0;
+    int contrast2 = 0;
+#define LOW_CONTRAST1 100
+#define LOW_CONTRAST2 30 // 50 // 30
+    if (tmp1 < LOW_CONTRAST1) contrast1++;
+    if (tmp2 < LOW_CONTRAST1) contrast1++;
+    if (tmp3 < LOW_CONTRAST1) contrast1++;
+    if (tmp1 < LOW_CONTRAST2) contrast2++;
+    if (tmp2 < LOW_CONTRAST2) contrast2++;
+    if (tmp3 < LOW_CONTRAST2) contrast2++;
+    if ((contrast1 >= 1) ||
+        (contrast2 >= 2))
       SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0xFFFFFF); // white
     else
       SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0x804000); // dark blue (bgr!)
@@ -342,10 +355,10 @@ void fill_and_color_scintilla()
   // (ii) now just concatenate colored/styled sections
   SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
   // do the coloring
-  std::list<speech_at>::iterator it;
+  std::list<annotation_at>::iterator it;
   //  int cnt = 0;
   int pos_prev = 0;
-  for (it = our_text.list_of_speech.begin(); it != our_text.list_of_speech.end(); ++it)
+  for (it = our_text.annotation_list.begin(); it != our_text.annotation_list.end(); ++it)
   {
     int pos = it->pos;
     int style = it->type;
