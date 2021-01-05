@@ -3,7 +3,17 @@ r e a d, the app for reading aloud
 (C) 2020 EkwoTECH GmbH
 ----------------------------------
 
-(i) change history:
+(i) change history (outdated, get from Github):
+
+12/30/2020
+- implement a speed comparison
+
+12/27/2020
+...
++ fix 1st speaker occurrence vs. further occurrences = different colors
+2do: text neu formatieren und Absätze neu setzen
+2do: text sprache erkennen
+2do: second run: mark speakers
 
 12/26/2020
 - fix: style initialization
@@ -37,6 +47,10 @@ r e a d, the app for reading aloud
 
 
 (ii) links:
+https://stackoverflow.com/questions/4456446/dictionary-text-file
+https://dzone.com/articles/10-best-text-annotation-tools-and-services-for-mac
+https://www.tagtog.net/
+---
 https://github.com/sawickiap/WinFontRender
 http://winapi.foosyerdoos.org.uk/index.php
 https://stackoverflow.com/questions/44877895/how-to-create-some-basic-controls-like-listbox-on-winapi-c

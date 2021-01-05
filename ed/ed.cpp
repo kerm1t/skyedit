@@ -305,27 +305,30 @@ void fill_and_color_scintilla()
   // (i) define styles
   // style 0
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x000000);
-  // style 1 speaker!
-  SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x0000FF); // red (bgr!)
-//  SendMessage(hwndScintilla, SCI_STYLESETBACK, 1, 0xCCCCCC); // white
-  SendMessage(hwndScintilla, SCI_STYLESETUNDERLINE, 1, 1);
+  // style 1 (new speaker recognized)
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x000000); // black
   SendMessage(hwndScintilla, SCI_STYLESETBOLD, 1, 1);
-// style 2 (citation found, speaker undefined)
-  SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x804000); // dark blue (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETBACK, 2, 0xCCCCCC); // light gray (bgr!)
+  // style 2 (known speaker recognized!)
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x0000FF); // red (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETUNDERLINE, 2, 1);
+  SendMessage(hwndScintilla, SCI_STYLESETBOLD, 2, 1);
+// style 3 (citation found, speaker undefined)
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 3, 0x804000); // dark blue (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0xCCCCCC); // light gray (bgr!)
 //  tut's net mit diesem style, nur fuer STYLE_DEFAULT ... (s.o.)
 //  SendMessage(hwndScintilla, SCI_STYLESETFONT, 1, (LPARAM)"Arial"); // font
 //  SendMessage(hwndScintilla, SCI_STYLESETSIZE, 1, 20); // font size
 //  SendMessage(hwndScintilla, SCI_STYLECLEARALL,1, 0);
-  // style 3 (keyword "said", "answered", ... recognized)
-  SendMessage(hwndScintilla, SCI_STYLESETFORE, 3, 0x804000); // dark blue (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0xE9C2CE); // light violet (bgr!)
-  // style 4
+  // style 4 (keyword "said", "answered", ... recognized)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 4, 0x804000); // dark blue (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETBACK, 4, 0x00FF80); // light green (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 4, 0xE9C2CE); // light violet (bgr!)
+  // style 5
+  SendMessage(hwndScintilla, SCI_STYLESETFORE, 5, 0x804000); // dark blue (bgr!)
+  SendMessage(hwndScintilla, SCI_STYLESETBACK, 5, 0x00FF80); // light green (bgr!)
   std::srand(std::time(nullptr)); // seed
+#define HAND_DEFINED_STYLES 6
   // 2do: dark background -> white font ( wenn 2 von 3 kleiner 0x1d)
-  for (int i = 5; i < 30; i++)
+  for (int i = HAND_DEFINED_STYLES; i < 30; i++)
   {
     // (a) background color
 #define COLOR_MIN 35

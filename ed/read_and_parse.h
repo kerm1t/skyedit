@@ -76,19 +76,31 @@ void read_and_parse(const std::string filename, highlighted_corpus& out)
 
 /*int find_speaker(const std::vector<std::string>& speakers, const std::string name)
 {
-	bool found = false;
-	int cnt = 0;
-	for (std::vector<speaker>::iterator it = std::begin(speakers); it != std::end(speakers); ++it)
-	{
-		if ((*it).name == name)
-		{
-			found = true;
-			(*it).occurence++;
-			break;
-		}
-		cnt++;
-	}
+  bool found = false;
+  int cnt = 0;
+  for (std::vector<speaker>::iterator it = std::begin(speakers); it != std::end(speakers); ++it)
+  {
+    if ((*it).name == name)
+    {
+      found = true;
+      (*it).occurence++;
+      break;
+    }
+    cnt++;
+  }
 }*/
+
+bool compare(const std::string& stmp, int i, const char* search, int len)
+{
+  for (int j = i; j < i+len; j++)
+  {
+    if (stmp[j + 2] != *search++)
+    {
+      return false;
+    }
+  }
+  return true;
+}
 
 // 1 pass parsing, search for speech and speaker.
 // Algo: As soon as a speaker is found, it serves as a state for the subsequent speed tihout clear indicator
@@ -115,8 +127,8 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
 //  for (int i=0;i<buffer.)
 
   // pass 1 - search speech
-  int ifound=0;
-  int style = 1; // so 1-style will be 0 as a start!! ... (int)standard;
+  int ifound = 0;
+  int state = 1; // formerly "style". so 1-state will be 0 as a start!! ... (int)standard;
   std::string token;
   int tokstart = 0;
   std::string cur_speaker; // last found speaker token
@@ -126,11 +138,11 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
   {
     if (stmp[i] == '"')
     {
-      style = 1 - style;
+      state = 1 - state;
       std::string name;
       int start = 0;
 // 2do: put the speech recognizer to external function (and include all found verbs)
-	  if ((stmp[i + 1] == ' ') &&
+/*    if ((stmp[i + 1] == ' ') &&
         (stmp[i + 2] == 's') &&
         (stmp[i + 3] == 'a') &&
         (stmp[i + 4] == 'i') &&
@@ -178,17 +190,29 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
               (stmp[i + 7] == 'n') &&
               (stmp[i + 8] == 'e') &&
               (stmp[i + 9] == 'd')) start = 11;
+*/
+// 2do: evtl. als inline?
+      if      (compare(stmp, i, "said", 4)) start = 7;
+      else if (compare(stmp, i, "cried", 5)) start = 8;
+      else if (compare(stmp, i, "asked", 5)) start = 8;
+      else if (compare(stmp, i, "inquired", 8)) start = 11;
+      else if (compare(stmp, i, "replied", 7)) start = 10;
+      else if (compare(stmp, i, "returned", 8)) start = 11;
+
 
       int idx_speaker = -1;
+      bool new_speaker = false;
+      bool known_speaker = false;
+      int n = 0;
       // said, 2do: added, answered, asked, continued, cried, exclaimed, inquired, interposed, interrupted,
       //            murmured, remarked, replied, responded, returned, sighed,  
       //            thought!!, whispered, ...
       if (start > 0)
       {
-        style = (int)tt_speech;
+        state = (int)tt_speech; // state override (which also corrects problems)
 
         // find name after "said ..."   stmp[i + 6] == ' '
-        int n = 0;
+///        int n = 0;
         // 2do: M. de Villefort
         while ((stmp[i + start + n] != ' ') &&
           (stmp[i + start + n] != '.') &&
@@ -233,64 +257,75 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
         {
           idx_speaker = speakers.size(); // a) new speaker
           speakers.push_back({ name, 1 });
-//		  out.annotation_list.push_back({ i + start, tt_standard }); // TRY it out!!
-//		  out.annotation_list.push_back({ i + start + n, tt_speech, 1 }); // TRY it out!!
-		}
+          new_speaker = true;
+        }
         else
         {
           idx_speaker = cnt; // b) speaker found above
+          known_speaker = true;
         }
         // 2do: return an index here, which can be used below ...
-        style = 2;
-		idx_cur_speaker = idx_speaker; // small hack, we can use this when the next speech comes right after "said XXX"
-	  }
-	  else
-	  {
-		  // no direct found via "said ..." or "answered ..."
-		  // so we use the current speaker
-		  idx_speaker = idx_cur_speaker;
-	  }
-
-#define MIN_STYLE_SPEAKER 3
-
-      if ((style==1) || (style==2)) // 2do: > 0
-        out.annotation_list.push_back( {i+1, (text_type)style, MIN_STYLE_SPEAKER+idx_speaker});
+        state = 2;
+        idx_cur_speaker = idx_speaker; // small hack, we can use this when the next speech comes right after "said XXX"
+      }
       else
-        out.annotation_list.push_back( {i, (text_type)style, -1} );
+      {
+        // no direct found via "said ..." or "answered ..."
+        // so we use the current speaker
+        idx_speaker = idx_cur_speaker;
+      }
+
+#define MIN_STYLE_SPEAKER 4
+
+      if ((state==1) || (state==2)) // 2do: > 0
+        out.annotation_list.push_back( {i+1, (text_type)state, MIN_STYLE_SPEAKER+idx_speaker});
+      else
+        out.annotation_list.push_back( {i, (text_type)state, -1} );
 
 /// 2do: 2 (e.g. Bilbo) or greater
-      if (style == 2) style = 1; // hack! set back, so that style=1-style works as above
+      if (state == 2) state = 1; // hack! set back, so that state=1-state works as above
+
+      if (new_speaker || known_speaker
+///        && (state != 1) && (state != 2) // within speech doesn't work right now
+        )
+      {
+        out.annotation_list.push_back({ i + start, tt_standard }); // TRY it out!!
+        out.annotation_list.push_back({ i + start + n, tt_speech, 1 }); // TRY it out!!
+      }
     }
 
-	if (stmp[i] == ' ')
-	{
-		int cnt = 0;
-		bool found = false;
-		for (std::vector<speaker>::iterator it = std::begin(speakers); it != std::end(speakers); ++it)
-		{
-			if ((*it).name == token)
-			{
-				found = true;
-				(*it).occurence++;
-				break;
-			}
-			cnt++;
-		}
-		if (found)
-		{
-//			out.annotation_list.push_back({ i-tokstart, tt_standard });
-			int toklen = i-tokstart-1;
-			out.annotation_list.push_back({ i-toklen, tt_standard });
-			out.annotation_list.push_back({ i, tt_speech, 1 });
-			cur_speaker = token;
-			idx_cur_speaker = cnt;
-		}
+  if (stmp[i] == ' ')
+  {
+    int cnt = 0;
+    bool found = false;
+    for (std::vector<speaker>::iterator it = std::begin(speakers); it != std::end(speakers); ++it)
+    {
+      if ((*it).name == token)
+      {
+        found = true;
+        (*it).occurence++;
+        break;
+      }
+      cnt++;
+    }
+    if (found)
+    {
+//      out.annotation_list.push_back({ i-tokstart, tt_standard });
+      int toklen = i-tokstart-1;
+///      if ((state != 1) && (state != 2)) // within speech doesn't work right now
+      {
+        out.annotation_list.push_back({ i - toklen, tt_standard });
+        out.annotation_list.push_back({ i, tt_speaker, 2 });
+      }
+      cur_speaker = token;
+      idx_cur_speaker = cnt;
+    }
 
-		token.clear();
-		tokstart = i;
-	}
-	else
-		token += stmp[i];
+    token.clear();
+    tokstart = i;
+  }
+  else
+    token += stmp[i];
   }
 
 /*  // pass 2 - search speaker
