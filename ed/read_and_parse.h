@@ -22,9 +22,12 @@ struct speaker
     return (name < struct2.name);
   }
 };
+// 12/1/2020
+// so what do we want: (a) annotation, i.e. a text section (start...end)  ... or (b) state
+// 1/12/2021 ... first we go with b), as that is implemented right now. If needed, we can later add (a) as well
 
 // this is our core feature, can be speech, a speaker or whatever marked part of the text
-struct annotation_at { // = highlight_at
+struct state_change { // = change in highlight
   int pos;
   text_type type;
   int idx_speaker; // speech = -1, speaker = <n>   ... 2do: set for speech :-)
@@ -38,7 +41,7 @@ struct highlighted_corpus {
 // cannot access a list element directly, just by traversal.
 // rather wanting a vector here.
 // ---------------------------------------------------------
-  std::list<annotation_at> annotation_list; // https://www.geeksforgeeks.org/list-cpp-stl/?ref=lbp
+  std::list<state_change> change_list; // https://www.geeksforgeeks.org/list-cpp-stl/?ref=lbp
 };
 
 // 2do:
@@ -63,11 +66,11 @@ void read_and_parse(const std::string filename, highlighted_corpus& out)
       {
         if (stmp[i+2] == -100) // --> start of speech
         {
-          out.annotation_list.push_back({ i, tt_speech });
+          out.change_list.push_back({ i, tt_speech });
         }
         if (stmp[i + 2] == -99) // --> end of speech 
         {
-          out.annotation_list.push_back({ i+1, tt_standard }); // include the closing citation mark
+          out.change_list.push_back({ i+1, tt_standard }); // include the closing citation mark
         }
       }
     }
@@ -108,7 +111,7 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
 {
   // init
   speakers.clear();
-  out.annotation_list.clear();
+  out.change_list.clear();
 
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
   std::ifstream t(filename);
@@ -235,9 +238,9 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
 #define MIN_STYLE_SPEAKER 4
 
       if ((scintilla_state ==1) || (scintilla_state ==2)) // 2do: > 0
-        out.annotation_list.push_back( {i+1, (text_type)scintilla_state, MIN_STYLE_SPEAKER+idx_speaker});
+        out.change_list.push_back( {i+1, (text_type)scintilla_state, MIN_STYLE_SPEAKER+idx_speaker});
       else
-        out.annotation_list.push_back( {i, (text_type)scintilla_state, -1} );
+        out.change_list.push_back( {i, (text_type)scintilla_state, -1} );
 
 /// 2do: 2 (e.g. Bilbo) or greater
       if (scintilla_state == 2) scintilla_state = 1; // hack! set back, so that state=1-state works as above
@@ -246,8 +249,8 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
 ///        && (state != 1) && (state != 2) // within speech doesn't work right now
         )
       {
-        out.annotation_list.push_back({ i + start, tt_standard }); // TRY it out!!
-        out.annotation_list.push_back({ i + start + n, tt_speech, 1 }); // TRY it out!!
+        out.change_list.push_back({ i + start, tt_standard }); // TRY it out!!
+        out.change_list.push_back({ i + start + n, tt_speech, 1 }); // TRY it out!!
       }
     }
 

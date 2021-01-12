@@ -115,9 +115,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     SendMessage(hwndScintilla, SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(dummy_txt.c_str()));
 ///    SendMessage(hwndScintilla, SCI_STYLESETFONT, STYLE_DEFAULT, (LPARAM)"Calibri"); // font
 ///    SendMessage(hwndScintilla, SCI_STYLESETSIZE, STYLE_DEFAULT, 48); // font size
-    our_text.annotation_list.push_back({ 1, (text_type)1, MIN_STYLE_SPEAKER+1 });
-    our_text.annotation_list.push_back({ 6, (text_type)0, MIN_STYLE_SPEAKER+0 });
-    our_text.annotation_list.push_back({ 21, (text_type)2, MIN_STYLE_SPEAKER+2 });
+    our_text.change_list.push_back({ 1, (text_type)1, MIN_STYLE_SPEAKER+1 });  // 0 up to here = light green
+    our_text.change_list.push_back({ 6, (text_type)0, MIN_STYLE_SPEAKER+0 });  // up to here
+    our_text.change_list.push_back({ 21, (text_type)2, MIN_STYLE_SPEAKER+2 }); // up to here
     scintilla_color();
 
 
@@ -221,8 +221,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               b_filechosen = GetOpenFileName(&ofn);
               if (b_filechosen)
               {
-//                MessageBox(NULL, ofn.lpstrFile, L"File Name", MB_OK);
-                char buffer[500];
+                char buffer[500]; // max. size of dir + filename!
                 size_t charsConverted = 0;
                 // First arg is the pointer to destination char, second arg is
                 // the pointer to source wchar_t, last arg is the size of char buffer
@@ -316,11 +315,11 @@ void scintilla_init_styles()
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 0, 0x000000);
   // style 1 (new speaker recognized)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 1, 0x000000); // black
-  SendMessage(hwndScintilla, SCI_STYLESETBOLD, 1, 1);
+  SendMessage(hwndScintilla, SCI_STYLESETBOLD, 1, 1);        // bold  
   // style 2 (known speaker recognized!)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x0000FF); // red (bgr!)
-  SendMessage(hwndScintilla, SCI_STYLESETUNDERLINE, 2, 1);
-  SendMessage(hwndScintilla, SCI_STYLESETBOLD, 2, 1);
+  SendMessage(hwndScintilla, SCI_STYLESETUNDERLINE, 2, 1);   // underline
+  SendMessage(hwndScintilla, SCI_STYLESETBOLD, 2, 1);        // bold
   // style 3 (citation found, speaker undefined)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 3, 0x804000); // dark blue (bgr!)
   SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0xCCCCCC); // light gray (bgr!)
@@ -368,12 +367,12 @@ void scintilla_init_styles()
 void scintilla_color()
 {
   // (ii) now just concatenate colored/styled sections
-  SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
+///  SendMessage(hwndScintilla, SCI_STARTSTYLING, 2, 1); // only needed, if style start is > 0
   // do the coloring
-  std::list<annotation_at>::iterator it;
+  std::list<state_change>::iterator it;
   //  int cnt = 0;
   int pos_prev = 0;
-  for (it = our_text.annotation_list.begin(); it != our_text.annotation_list.end(); ++it)
+  for (it = our_text.change_list.begin(); it != our_text.change_list.end(); ++it)
   {
     int pos = it->pos;
 ///    int style = it->type;
