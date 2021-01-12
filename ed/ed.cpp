@@ -6,18 +6,22 @@
 #include "Scintilla.h" // 2do: move into this repo
 #include "read_and_parse.h"
 #include <Commdlg.h>
+//#include <windows.h> // CFont, nope
+
 
 highlighted_corpus our_text;
 std::vector<speaker> speakers;
 
 HWND hList;
-void list_speakers();
+void listbox_add_speakers();
 
 HWND hwndScintilla;
 OPENFILENAME ofn;
 char szFile[260];
 BOOL b_filechosen;
-void fill_and_color_scintilla();
+void scintilla_fill();
+void scintilla_init_styles();
+void scintilla_color();
 
 
 //define an unicode string type alias
@@ -103,17 +107,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UpdateWindow(hwndBase);
 
 
-
-    // now load text and parse
-    // in: filename
-    // out: text, list of positions (i.e. where std-text changes to speech ... and back)  
-//    read_and_parse("hobbit.txt", our_text); // 2 types of citation marks
-//    read_and_parse2("hobbit_mod.txt", our_text); // 1 type of citation marks
-//    read_and_parse2("three_men_in_a_boat.txt", our_text); // ???
-//    read_and_parse2("win1.txt", our_text); // 1 type of citation marks
+    scintilla_init_styles(); // do this only once
 
 
-//    color_scintilla();
+    // show a dummy text, which gives some debugging help, too
+    std::string dummy_txt = "\"Peter und der Wolf.\"\nvon Sergei Prokofiev (1891-1953)\n\nOpen a new file\nto get speech and speaker recognition.";
+    SendMessage(hwndScintilla, SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(dummy_txt.c_str()));
+///    SendMessage(hwndScintilla, SCI_STYLESETFONT, STYLE_DEFAULT, (LPARAM)"Calibri"); // font
+///    SendMessage(hwndScintilla, SCI_STYLESETSIZE, STYLE_DEFAULT, 48); // font size
+    our_text.annotation_list.push_back({ 1, (text_type)1, MIN_STYLE_SPEAKER+1 });
+    our_text.annotation_list.push_back({ 6, (text_type)0, MIN_STYLE_SPEAKER+0 });
+    our_text.annotation_list.push_back({ 21, (text_type)2, MIN_STYLE_SPEAKER+2 });
+    scintilla_color();
 
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_ED));
@@ -225,8 +230,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 wcstombs_s(&charsConverted, buffer, ofn.lpstrFile, 500);
                 std::string fname(buffer);
                 read_and_parse2(fname, our_text, speakers); // 1 type of citation marks
-                list_speakers();
-                fill_and_color_scintilla();
+                listbox_add_speakers();
+                scintilla_fill();
+                scintilla_color();
               }
               break;
             case IDM_EXIT:
@@ -274,7 +280,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
-void list_speakers()
+void listbox_add_speakers()
 {
   sort(speakers.begin(), speakers.end());
   SendMessage(hList, LB_RESETCONTENT, 0, 0); // clear
@@ -287,15 +293,18 @@ void list_speakers()
   }
 }
 
-void fill_and_color_scintilla()
+void scintilla_fill()
 {
   // (A) fast version [...]
 // (B) regular (slow?) version
   SendMessage(hwndScintilla, SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(our_text.text.c_str()));
-//  std::string tmp_speakers(*speaker.data());
-//  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(tmp_speakers.c_str()));
+  //  std::string tmp_speakers(*speaker.data());
+  //  SendMessage(hwndScintilla, SCI_SETTEXT, 0, int(tmp_speakers.c_str()));
+}
 
-// https://scintilla-interest.narkive.com/j9CxOCCw/changing-the-font-doesn-t-update-scintilla
+void scintilla_init_styles()
+{
+  // https://scintilla-interest.narkive.com/j9CxOCCw/changing-the-font-doesn-t-update-scintilla
   SendMessage(hwndScintilla, SCI_STYLESETFONT, STYLE_DEFAULT, (LPARAM)"Calibri"); // font
   SendMessage(hwndScintilla, SCI_STYLESETSIZE, STYLE_DEFAULT, 20); // font size
   SendMessage(hwndScintilla, SCI_STYLECLEARALL, 0, 0);
@@ -312,7 +321,7 @@ void fill_and_color_scintilla()
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 2, 0x0000FF); // red (bgr!)
   SendMessage(hwndScintilla, SCI_STYLESETUNDERLINE, 2, 1);
   SendMessage(hwndScintilla, SCI_STYLESETBOLD, 2, 1);
-// style 3 (citation found, speaker undefined)
+  // style 3 (citation found, speaker undefined)
   SendMessage(hwndScintilla, SCI_STYLESETFORE, 3, 0x804000); // dark blue (bgr!)
   SendMessage(hwndScintilla, SCI_STYLESETBACK, 3, 0xCCCCCC); // light gray (bgr!)
 //  tut's net mit diesem style, nur fuer STYLE_DEFAULT ... (s.o.)
@@ -349,12 +358,15 @@ void fill_and_color_scintilla()
     if (tmp2 < LOW_CONTRAST2) contrast2++;
     if (tmp3 < LOW_CONTRAST2) contrast2++;
     if ((contrast1 >= 1) ||
-        (contrast2 >= 2))
+      (contrast2 >= 2))
       SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0xFFFFFF); // white
     else
       SendMessage(hwndScintilla, SCI_STYLESETFORE, i, 0x804000); // dark blue (bgr!)
   }
+}
 
+void scintilla_color()
+{
   // (ii) now just concatenate colored/styled sections
   SendMessage(hwndScintilla, SCI_STARTSTYLING, 0, 1); // SCI_STARTSTYLING(position start, int unused)
   // do the coloring
@@ -364,7 +376,7 @@ void fill_and_color_scintilla()
   for (it = our_text.annotation_list.begin(); it != our_text.annotation_list.end(); ++it)
   {
     int pos = it->pos;
-    int style = it->type;
+///    int style = it->type;
     int idx_speaker = it->idx_speaker;
 //    if (cnt==0)
 //      SendMessage(hwndScintilla, SCI_SETSTYLING, pos - pos_prev, 0);
@@ -398,8 +410,8 @@ int OnCreate(const HWND hwnd, CREATESTRUCT *cs)
   
 //  CFont Font;
 //  Font.CreatePointFont(120, _T("Courier"));        // creates a 12-point-Courier-font
-//  m_Listbox.SetFont(&Font);                        // with a member variable associated
-
+//  hList.SetFont(&Font);                        // with a member variable associated
+///  GetDlgItem(IDCL_LISTBOX)->SetFont(&Font);         // without a member variable associated
 //  AddString(hList, _T("Listbox"));
 
   return 0;
