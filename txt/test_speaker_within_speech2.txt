@@ -1,0 +1,4 @@
+"Hi" said Bilbo.
+"How are you?" asked Gandalf.
+"I'm doing well, Gandalf the wizard", Bilbo answered, "how are you doing?"
+"Very fine, young fellow Bilbo" thanked Gandalf.

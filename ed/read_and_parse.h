@@ -10,6 +10,28 @@
 #include <algorithm> // erase
 #include <regex>
 
+/*
+==============================================================================================================
+
+The Scintilla Style end describes the text UNTIL the style change.
+This is more or less the opposite of citation start and end.
+Especially, as we are still within the citation, we do not know about the citation end and thus the speaker.
+So to find and MARK speaker within quote, probably a second pass is needed.
+
+Follows a couple of example lines:                                               Scintilla Style(-end) Tags
+                                                                                 --------------------------
+"Hi" said Bilbo.                                                              |
+|1 |2     |3  |4                                                              |  1=std, 2=speech, 3=std, 4=speaker
+"How are you?" asked Gandalf.                                                 |
+|5           |6      |7    |8                                                 |  3=std, 4=speech, 7=std, 8=speaker 
+"I'm doing well, Gandalf the wizard", Bilbo answered, "how are you doing?"    |
+|9                                 |10|11 |12         |13                |14  |  9=std, 10=speech, 11=std,12=speaker,13=std,14=speech
+"Very fine, young fellow Bilbo" thanked Gandalf.                              |
+|15                           |16       |17   |18                             |  etc.
+
+==============================================================================================================
+*/
+
 // entities, which are extracted from the text, i.e. speakers, speech blocks ---------------------------------
 enum text_type { tt_standard = 0, tt_unknown_speech = 1, tt_speech=2, tt_speaker=3 };
 
@@ -27,7 +49,7 @@ struct speaker
 // 1/12/2021 ... first we go with b), as that is implemented right now. If needed, we can later add (a) as well
 
 // this is our core feature, can be speech, a speaker or whatever marked part of the text
-struct state_change { // = change in highlight
+struct text_tag { // = change in highlight
   int pos;
   text_type type;
   int idx_speaker; // speech = -1, speaker = <n>   ... 2do: set for speech :-)
@@ -41,7 +63,7 @@ struct highlighted_corpus {
 // cannot access a list element directly, just by traversal.
 // rather wanting a vector here.
 // ---------------------------------------------------------
-  std::list<state_change> change_list; // https://www.geeksforgeeks.org/list-cpp-stl/?ref=lbp
+  std::list<text_tag> tag_list; // https://www.geeksforgeeks.org/list-cpp-stl/?ref=lbp
 };
 
 // 2do:
@@ -66,11 +88,11 @@ void read_and_parse(const std::string filename, highlighted_corpus& out)
       {
         if (stmp[i+2] == -100) // --> start of speech
         {
-          out.change_list.push_back({ i, tt_speech });
+          out.tag_list.push_back({ i, tt_speech });
         }
         if (stmp[i + 2] == -99) // --> end of speech 
         {
-          out.change_list.push_back({ i+1, tt_standard }); // include the closing citation mark
+          out.tag_list.push_back({ i+1, tt_standard }); // include the closing citation mark
         }
       }
     }
@@ -95,6 +117,8 @@ void read_and_parse(const std::string filename, highlighted_corpus& out)
 
 bool compare(const std::string& stmp, int i, const char* search, int len)
 {
+  int l = stmp.length(); // 2do: this can be a global variable, or is this optimized by the compiler?
+  if (i + len > l) return false;
   for (int j = i; j < i+len; j++)
   {
     if (stmp[j + 2] != *search++)
@@ -111,7 +135,7 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
 {
   // init
   speakers.clear();
-  out.change_list.clear();
+  out.tag_list.clear();
 
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
   std::ifstream t(filename);
@@ -131,34 +155,64 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
 
   // pass 1 - search speech
   int ifound = 0;
-  int state = 0;
-  int scintilla_state = 1; // formerly "style". so 1-state will be 0 as a start!! ... (int)standard;
+  int past_state = 1; // formerly "style". so 1-state will be 0 as a start!! ... (int)standard;
+///  int scintilla_state = 1; // formerly "style". so 1-state will be 0 as a start!! ... (int)standard;
   std::string token;
   int tokstart = 0;
   std::string cur_speaker; // last found speaker token
   int idx_cur_speaker = 0;
+  int idx_prev_speaker = 0;
+  bool paragraph = false;
 
-  for (int i = 0; i < (int)stmp.length(); i++)
+//  for (int i = 0; i < (int)stmp.length(); i++)
+  int i = 0; // 2do: is >>int<< sufficient?
+  while (i < (int)stmp.length())
   {
+    // look out for a paragraph -> change of speaker! == "speaker alternation"
+    paragraph = false;
+    if (stmp[i] == '\n')
+    {
+      if (stmp[i + 1] == '\n')
+      {
+//        int tmp = 2;
+        // change of speaker expected, i.e. use the previous speaker
+        paragraph = true;
+        if (idx_cur_speaker != idx_prev_speaker)
+        {
+          int tmp = idx_cur_speaker; // zwiegespräch
+          idx_cur_speaker = idx_prev_speaker;
+          idx_prev_speaker = tmp;
+        }
+      }
+    }
+
     // -----------------
     // (A) detect speech
     // -----------------
     if (stmp[i] == '"')
     {
-      state = 1 - state;
-      scintilla_state = 1 - scintilla_state;
+      past_state = 1 - past_state;
+///      scintilla_state = 1 - scintilla_state;
       std::string name;
       int start = 0;
 
 // 2do: include all found verbs, s. below
 // 2do: speedup, evtl. als inline?
+      // looking for ..." said Bilbo
       if      (compare(stmp, i, "said", 4)) start = 7;
       else if (compare(stmp, i, "cried", 5)) start = 8;
-      else if (compare(stmp, i, "asked", 5)) start = 8;
+      else if (compare(stmp, i, "added", 5)) start = 8;
+      else if (compare(stmp, i, "asked", 5))
+        start = 8;
       else if (compare(stmp, i, "inquired", 8)) start = 11;
       else if (compare(stmp, i, "replied", 7)) start = 10;
       else if (compare(stmp, i, "returned", 8)) start = 11;
+      else if (compare(stmp, i, "answered", 8)) start = 11;
+      else if (compare(stmp, i, "murmured", 8)) start = 11;
+      else if (compare(stmp, i, "exclaimed", 9)) start = 12;
 
+      // look for ..." Bilbo said
+      // [...]
 
       int idx_speaker = -1;
       bool new_speaker = false;
@@ -167,9 +221,11 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
       // said, 2do: added, answered, asked, continued, cried, exclaimed, inquired, interposed, interrupted,
       //            murmured, remarked, replied, responded, returned, sighed,  
       //            thought!!, whispered, ...
-      if (start > 0)
+      bool b_speak_verb_found = start > 0;
+      if (b_speak_verb_found) // now let's parse for the speaker
       {
-        scintilla_state = (int)tt_speech; // state override (which also corrects problems)
+        past_state = (int)tt_speech; // state override (which also corrects problems)
+///        scintilla_state = (int)tt_speech; // state override (which also corrects problems)
 
         // find name after "said ..."   stmp[i + 6] == ' '
 ///        int n = 0;
@@ -225,7 +281,8 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
           known_speaker = true;
         }
         // 2do: return an index here, which can be used below ...
-        scintilla_state = 2;
+///        scintilla_state = 2;
+//        idx_prev_speaker = idx_cur_speaker;
         idx_cur_speaker = idx_speaker; // small hack, we can use this when the next speech comes right after "said XXX"
       }
       else
@@ -237,27 +294,37 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
 
 #define MIN_STYLE_SPEAKER 4
 
-      if ((scintilla_state ==1) || (scintilla_state ==2)) // 2do: > 0
-        out.change_list.push_back( {i+1, (text_type)scintilla_state, MIN_STYLE_SPEAKER+idx_speaker});
+///      if ((scintilla_state ==1) || (scintilla_state ==2)) // 2do: > 0
+      if ((past_state == (int)tt_unknown_speech) ||
+          (past_state == (int)tt_speech)) // 2do: > 0
+          out.tag_list.push_back( {i+1, (text_type)past_state, MIN_STYLE_SPEAKER+idx_speaker});
       else
-        out.change_list.push_back( {i, (text_type)scintilla_state, -1} );
+        out.tag_list.push_back( {i, (text_type)past_state, -1} );
 
 /// 2do: 2 (e.g. Bilbo) or greater
-      if (scintilla_state == 2) scintilla_state = 1; // hack! set back, so that state=1-state works as above
+/// s.u.      if (past_state == 2) past_state = 1; // hack! set back, so that state=1-state works as above
 
       if (new_speaker || known_speaker
 ///        && (state != 1) && (state != 2) // within speech doesn't work right now
         )
       {
-        out.change_list.push_back({ i + start, tt_standard }); // TRY it out!!
-        out.change_list.push_back({ i + start + n, tt_speech, 1 }); // TRY it out!!
+        out.tag_list.push_back({ i + start, tt_standard }); // TRY it out!!
+        out.tag_list.push_back({ i + start + n, tt_speech, 1 }); // TRY it out!!
+        i += start + n; // we do not want to parse this speaker again (this was a bug)
+        token.clear(); // we do not want to use this end of quote as token (below)
       }
     }
 
     // -------------------------------------------------
     // (A) detect token (limited by SPACE), e.g. speaker
     // -------------------------------------------------
-    if (stmp[i] == ' ')
+    if ((stmp[i] == ' ') 
+/*     || (stmp[i] == '.') 
+     || (stmp[i] == ',') 
+     || (stmp[i] == ';') 
+     || (stmp[i] == ':')
+     || (stmp[i] == '"') // 2do: test other quotation marks, too
+ */     ) 
     {
       int cnt = 0;
       bool found = false;
@@ -276,19 +343,24 @@ void read_and_parse2(const std::string filename, highlighted_corpus& out, std::v
   //      out.annotation_list.push_back({ i-tokstart, tt_standard });
         int toklen = i-tokstart-1;
   ///      if ((state != 1) && (state != 2)) // within speech doesn't work right now
+        if (past_state != 0) // within speech doesn't work right now
         {
-///          out.annotation_list.push_back({ i - toklen, (text_type)scintilla_state });
-///          out.annotation_list.push_back({ i, tt_speaker, 2 });
+          out.tag_list.push_back({ i - toklen, (text_type)past_state });
+          out.tag_list.push_back({ i, tt_speaker, 2 });
         }
         cur_speaker = token;
         idx_cur_speaker = cnt;
+///        i += toklen;
       }
 
       token.clear();
       tokstart = i;
     }
     else
-      token += stmp[i];
+      token += stmp[i]; // build the token incrementally
+    i++; // incr. while loop
+
+    if (past_state == 2) past_state = 1; // hack! set back, so that state=1-state works as above
   }
 
   // pass 2 - search speaker   --> ATM just 1-pass

@@ -1,9 +1,16 @@
-----------------------------------
+------------------------------------------
 r e a d, the app for reading aloud
-(C) 2020 EkwoTECH GmbH
-----------------------------------
+(C) 2020-21 EkwoTECH GmbH, Friedrichshafen
+------------------------------------------
+2do:
+- add "stammered"
+- list of speakers with colors
 
 (i) change history (outdated, get from Github):
+
+1/18/2021
+- detect paragraphs to alternate speakers
+- fixed the scintilla styling
 
 12/30/2020
 - implement a speed comparison

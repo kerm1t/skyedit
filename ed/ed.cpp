@@ -106,6 +106,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ShowWindow(hwndBase, nCmdShow);
     UpdateWindow(hwndBase);
 
+    SendMessage(hwndScintilla, SCI_SETMARGINWIDTHN, 0, 60); //  show line numbers
 
     scintilla_init_styles(); // do this only once
 
@@ -115,10 +116,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     SendMessage(hwndScintilla, SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(dummy_txt.c_str()));
 ///    SendMessage(hwndScintilla, SCI_STYLESETFONT, STYLE_DEFAULT, (LPARAM)"Calibri"); // font
 ///    SendMessage(hwndScintilla, SCI_STYLESETSIZE, STYLE_DEFAULT, 48); // font size
-    our_text.change_list.push_back({ 1, (text_type)1, MIN_STYLE_SPEAKER+1 });  // 0 up to here = light green
-    our_text.change_list.push_back({ 6, (text_type)0, MIN_STYLE_SPEAKER+0 });  // up to here
-    our_text.change_list.push_back({ 21, (text_type)2, MIN_STYLE_SPEAKER+2 }); // up to here
+    our_text.tag_list.push_back({ 1, (text_type)1, MIN_STYLE_SPEAKER+1 });  // 0 up to here = light green
+    our_text.tag_list.push_back({ 6, (text_type)0, MIN_STYLE_SPEAKER+0 });  // up to here
+    our_text.tag_list.push_back({ 21, (text_type)2, MIN_STYLE_SPEAKER+2 }); // up to here
     scintilla_color();
+//    SendMessage(hwndScintilla, SCI_ANNOTATIONSETTEXT, 1, reinterpret_cast<LPARAM>(L"watt is datt denn")); // in line 1
+    std::string s = "Test, dies ist eine Bemerkung in Zeile 2";
+    SendMessage(hwndScintilla, SCI_ANNOTATIONSETTEXT, 1, reinterpret_cast<LPARAM>(s.c_str())); // in line 1
+    SendMessage(hwndScintilla, SCI_ANNOTATIONSETSTYLE, 1, 3); // style 3
+    SendMessage(hwndScintilla, SCI_ANNOTATIONSETVISIBLE, 2, 0); // ANNOTATION_BOXED	2	Annotations are indented to match the text and are surrounded by a box.
 
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_ED));
@@ -369,10 +375,10 @@ void scintilla_color()
   // (ii) now just concatenate colored/styled sections
 ///  SendMessage(hwndScintilla, SCI_STARTSTYLING, 2, 1); // only needed, if style start is > 0
   // do the coloring
-  std::list<state_change>::iterator it;
+  std::list<text_tag>::iterator it;
   //  int cnt = 0;
   int pos_prev = 0;
-  for (it = our_text.change_list.begin(); it != our_text.change_list.end(); ++it)
+  for (it = our_text.tag_list.begin(); it != our_text.tag_list.end(); ++it)
   {
     int pos = it->pos;
 ///    int style = it->type;
